@@ -29,20 +29,21 @@ steps:
       # Use an official Python runtime as a parent image
       FROM python:3.9-slim
 
+      WORKDIR /app/
+
       # Set environment variables
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
 
       # Install git and other dependencies
       RUN apt-get update && apt-get install -y \
-          git \
           curl \
           && rm -rf /var/lib/apt/lists/*
 
-      # Change the working directory to autogenui
-      WORKDIR /app/autogen-ui
-
       # Install Python dependencies
       RUN pip install -e .
+
+      # Change the working directory to autogenui
+      WORKDIR /app/autogen-ui
 
       # Install Node.js and yarn
       RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
