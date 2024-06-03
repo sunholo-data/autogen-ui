@@ -33,7 +33,7 @@ steps:
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
 
       # Install git and other dependencies
-      pip install autogenui .
+      RUN pip install autogenui . && pip list && python --version
 
       # Expose the port the app runs on
       EXPOSE 8080
