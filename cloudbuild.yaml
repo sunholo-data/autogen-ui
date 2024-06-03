@@ -29,41 +29,14 @@ steps:
       # Use an official Python runtime as a parent image
       FROM python:3.9-slim
 
-      WORKDIR /app/
-
       # Set environment variables
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
 
       # Install git and other dependencies
-      RUN apt-get update && apt-get install -y \
-          curl \
-          && rm -rf /var/lib/apt/lists/*
-
-      # Install Python dependencies
-      RUN pip install -e .
-
-      # Change the working directory to autogenui
-      WORKDIR /app/autogen-ui
-
-      # Install Node.js and yarn
-      RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-          && apt-get install -y nodejs \
-          && npm install --global yarn
-
-      # Change the working directory to the frontend
-      WORKDIR /app/autogen-ui/frontend
-
-      # Install frontend dependencies
-      RUN yarn install
-
-      # Build the frontend
-      RUN yarn build
+      pip install autogenui .
 
       # Expose the port the app runs on
       EXPOSE 8080
-
-      # Set the working directory back to the root of the application
-      WORKDIR /app/autogen-ui
 
       # Run the UI server
       CMD ["autogenui", "--port", "8080"]
