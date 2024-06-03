@@ -61,6 +61,7 @@ steps:
         gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME} \
            --region ${_REGION} \
            --project ${_PROJECT_ID} \
+           --port 8080 \
            --platform managed \
            --allow-unauthenticated \
            --memory 2Gi \
