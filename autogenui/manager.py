@@ -7,6 +7,29 @@ import autogen
 from .utils import parse_token_usage
 import time
 
+import os
+import tempfile
+
+from autogen import ConversableAgent
+from autogen.coding import LocalCommandLineCodeExecutor
+
+# Create a temporary directory to store the code files.
+temp_dir = tempfile.TemporaryDirectory()
+
+def get_merged_terminate_messages(chat_result) -> str:
+    terminate_messages = []
+
+    # Iterate over chat history to find messages containing "TERMINATE"
+    for message in chat_result.chat_history:
+        if 'TERMINATE' in message['content']:
+            # Remove "TERMINATE" string from the content
+            cleaned_content = message['content'].replace('TERMINATE', '').strip()
+            terminate_messages.append(cleaned_content)
+
+    # Merge the cleaned messages into one string
+    merged_message = ' '.join(terminate_messages)
+    
+    return merged_message
 
 class Manager(object):
     def __init__(self) -> None:
@@ -24,35 +47,61 @@ class Manager(object):
             "model": "gpt-4o",
         }
 
-        assistant = autogen.AssistantAgent(
-            name="assistant",
-            max_consecutive_auto_reply=3, llm_config=llm_config,)
+        code_writer_system_message = """You are a helpful AI assistant.
+        IMPORTANT: Reply 'TERMINATE' in your answer when the question has been answered.
+        Solve tasks using your coding and language skills.
+        In the following cases, suggest python code (in a python coding block) or shell script (in a sh coding block) for the user to execute.
+        1. When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
+        2. When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
+        Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses code, and which step uses your language skill.
+        When using code, you must indicate the script type in the code block. The user cannot provide any other feedback or perform any other action beyond executing the code you suggest. The user can't modify your code. So do not suggest incomplete code which requires users to modify. Don't use a code block if it's not intended to be executed by the user.
+        If you want the user to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
+        If the result indicates there is an error, fix the error and output the code again. Suggest the full code instead of partial code or code changes. If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
+        When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+        Remember: Reply 'TERMINATE' in the end when everything is done.
+        """
 
-        # create a UserProxyAgent instance named "user_proxy"
-        user_proxy = autogen.UserProxyAgent(
-            name="user_proxy",
-            human_input_mode="NEVER",
-            llm_config=llm_config,
-            max_consecutive_auto_reply=3,
-            is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
-            code_execution_config={
-                "work_dir": "scratch/coding",
-                "use_docker": False
-            },
+        code_writer_agent = ConversableAgent(
+            "code_writer_agent",
+            system_message=code_writer_system_message,
+            llm_config={"config_list": [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]},
+            code_execution_config=False,  # Turn off code execution for this agent.
+        )
+
+                # Create a local command line code executor.
+        executor = LocalCommandLineCodeExecutor(
+            timeout=60,  # Timeout for each code execution in seconds.
+            work_dir=temp_dir.name,  # Use the temporary directory to store the code files.
+        )
+        # Create an agent with code executor configuration.
+        code_executor_agent = ConversableAgent(
+            "code_executor_agent",
+            llm_config=False,  # Turn off LLM for this agent.
+            code_execution_config={"executor": executor},  # Use the local command line code executor.
+            human_input_mode="NEVER",  # never take human input for this agent for safety.
         )
         start_time = time.time()
-        user_proxy.initiate_chat(
-            assistant,
-            message=prompt,
 
+        chat_result = code_executor_agent.initiate_chat(
+            code_writer_agent,
+            message=prompt,
+            max_turns=10
         )
 
-        messages = user_proxy.chat_messages[assistant]
-        #logged_history = autogen.ChatCompletion.logged_history
-        autogen.ChatCompletion.stop_logging()
+        print(chat_result)
+
+
+        message = get_merged_terminate_messages(chat_result)
+        print(message)
+
+        messages = chat_result.chat_history
+
+        messages.append({'content': message, 'role': 'assistant'})
+
         response = {
-            "messages": messages[1:],
+            "messages": chat_result.chat_history,
             "usage": "", #parse_token_usage(logged_history),
             "duration": time.time() - start_time,
         }
+
         return response
