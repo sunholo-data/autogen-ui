@@ -1,6 +1,5 @@
 substitutions:
   _SERVICE_NAME: autogen
-  _BUILD_FOLDER: application/qna/vertex-genai
   _IMAGE_NAME: terraform_managed
   _REGION: terraform_managed
   _ARTIFACT_REGISTRY_REPO_URL: terraform_managed
@@ -21,7 +20,6 @@ logsBucket: gs://multivac-deploy-logging-bucket
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
-    dir: ${_BUILD_FOLDER}
     args:
     - '-c'
     - |
@@ -32,8 +30,10 @@ steps:
       # Set environment variables
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
 
-      # Install git and other dependencies
-      RUN pip install autogenui sunholo[all] && pip list && python --version
+      # Install this package
+      RUN pip install . 
+      
+      RUN pip install sunholo[all] && pip list && python --version
 
       # Expose the port the app runs on
       EXPOSE 8080
@@ -43,18 +43,15 @@ steps:
       EOF
 
   - name: 'gcr.io/cloud-builders/docker'
-    dir: ${_BUILD_FOLDER}
     args: ['build', '-t', '${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME}', '-f', 'Dockerfile_cloudrun', '.', '--network=cloudbuild']
 
   - name: 'gcr.io/cloud-builders/docker'
-    dir: ${_BUILD_FOLDER}
     args: ['push', '${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME}']
 
   # Deploy the image to Cloud Run
   - name: "gcr.io/cloud-builders/gcloud"
     id: deploy cloud run
     entrypoint: bash
-    dir: ${_BUILD_FOLDER}
     args:
       - "-c"
       - |
