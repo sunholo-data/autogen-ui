@@ -126,3 +126,17 @@ yarn build
       primaryClass={cs.AI}
 }
 ```
+
+## sunholo
+
+Call the underlying API
+
+```sh
+export FLASK_URL=http://127.0.0.1:8081
+curl -X POST ${FLASK_URL}/api/generate \
+     -H "Content-Type: application/json" \
+     -d '{
+           "prompt": "what is 100th prime number?",
+           "history": "No history\nNo history too"
+         }'
+```
