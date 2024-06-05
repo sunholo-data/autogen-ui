@@ -45,15 +45,6 @@ class Manager(object):
         pass
 
     def run_flow(self, prompt: str, flow: str = "default") -> None:
-        #autogen.ChatCompletion.start_logging(compact=False)
-        config_list = autogen.config_list_openai_aoai()
-
-        llm_config = {
-            "seed": 42,  # seed for caching and reproducibility
-            "config_list": config_list,  # a list of OpenAI API configurations
-            "temperature": 0,  # temperature for sampling
-            "model": "gpt-4o",
-        }
 
         code_writer_system_message = """You are a helpful AI assistant.
         IMPORTANT: Reply 'TERMINATE' in your answer when the question has been answered.
