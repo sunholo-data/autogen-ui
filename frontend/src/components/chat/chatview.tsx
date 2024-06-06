@@ -32,8 +32,8 @@ export default function ChatBoxView({
   const messageBoxInputRef = React.useRef<HTMLDivElement>(null);
   const user = { email: "testuser@mail.com" };
 
-  const serverUrl = process.env.NEXT_PUBLIC_API_SERVER;
-  const deleteMsgUrl = `/messages/delete`;
+  const serverUrl = '/api';
+  const deleteMsgUrl = `${serverUrl}/messages/delete`;
 
   const [loading, setLoading] = React.useState(false);
   const [selectedMessage, setSelectedMessage] =

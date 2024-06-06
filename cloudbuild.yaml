@@ -36,7 +36,6 @@ steps:
 
       # Install this package
       RUN pip install . 
-
       RUN pip install sunholo[all] && pip list && python --version
 
       # Expose the port the app runs on

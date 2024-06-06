@@ -168,3 +168,5 @@ cython_debug/
 #.idea/
 .vac_proxy_tracker.json
 /.venv2
+
+node_modules/*
