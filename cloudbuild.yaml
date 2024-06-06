@@ -28,12 +28,14 @@ steps:
       FROM python:3.9-slim
 
       WORKDIR /app
-      
+
+      COPY . /app
+
       # Set environment variables
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
 
       # Install this package
-      RUN ls & pip install . 
+      RUN pip install . 
 
       RUN pip install sunholo[all] && pip list && python --version
 
