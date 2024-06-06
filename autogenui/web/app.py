@@ -14,7 +14,7 @@ logger = logging.getLogger("autogenui")
 
 
 app = FastAPI()
-# allow cross origin requests for testing on localhost: 800 * ports only
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

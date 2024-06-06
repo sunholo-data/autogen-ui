@@ -33,7 +33,7 @@ export default function ChatBoxView({
   const user = { email: "testuser@mail.com" };
 
   const serverUrl = process.env.NEXT_PUBLIC_API_SERVER;
-  const deleteMsgUrl = `${serverUrl}/messages/delete`;
+  const deleteMsgUrl = `/messages/delete`;
 
   const [loading, setLoading] = React.useState(false);
   const [selectedMessage, setSelectedMessage] =
@@ -311,7 +311,7 @@ export default function ChatBoxView({
 
     console.log("payload", payload);
 
-    const generateUrl = `${serverUrl}/generate`;
+    const generateUrl = `/generate`;
     const postData = {
       method: "POST",
       headers: {
