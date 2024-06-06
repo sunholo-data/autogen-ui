@@ -64,7 +64,6 @@ steps:
            --project ${_PROJECT_ID} \
            --port 8080 \
            --platform managed \
-           --allow-unauthenticated \
            --memory 2Gi \
            --cpu 1 \
            --max-instances 3 \
