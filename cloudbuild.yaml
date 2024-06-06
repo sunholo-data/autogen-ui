@@ -31,18 +31,8 @@ steps:
 
       COPY . /app
 
-      # Install Node.js and Yarn
-      RUN apt-get update && apt-get install -y curl gnupg
-      RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
-      RUN apt-get install -y nodejs
-      RUN npm install --global yarn
-
       # Set environment variables
       ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
-
-      # Install Node.js dependencies and build the frontend
-      WORKDIR /app/frontend
-      RUN yarn install && yarn build
 
       # Install this package
       RUN pip install . && pip install sunholo[all] && pip list && python --version
