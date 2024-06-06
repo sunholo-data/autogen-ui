@@ -311,7 +311,7 @@ export default function ChatBoxView({
 
     console.log("payload", payload);
 
-    const generateUrl = `/generate`;
+    const generateUrl = `${serverUrl}/generate`;
     const postData = {
       method: "POST",
       headers: {
