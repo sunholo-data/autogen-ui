@@ -329,7 +329,8 @@ export default function ChatBoxView({
           res.json().then((data) => {
             if (data && data.status) {
               console.log("******* response received ", data);
-              const lastMessage = getLastMessage(data.data.messages);
+              //const lastMessage = getLastMessage(data.data.messages);
+              const lastMessage = data.data.summary;
               const botMesage: IChatMessage = {
                 text: lastMessage,
                 sender: "bot",

@@ -9,6 +9,7 @@ import time
 
 import os
 import tempfile
+import datetime
 
 from autogen import ConversableAgent
 from autogen.coding import LocalCommandLineCodeExecutor
@@ -27,29 +28,12 @@ venv_context = create_virtual_env(venv_dir)
 # Create a temporary directory to store the code files.
 temp_dir = tempfile.TemporaryDirectory()
 
-def get_merged_terminate_messages(chat_result) -> str:
-    terminate_messages = []
-
-    # Iterate over chat history to find messages containing "TERMINATE"
-    for message in chat_result.chat_history:
-        if 'content' in message:
-            content = message['content']
-            if content and 'TERMINATE' in content:
-                    # Remove "TERMINATE" string from the content
-                    cleaned_content = content.replace('TERMINATE', '').strip()
-                    terminate_messages.append(cleaned_content)
-
-    # Merge the cleaned messages into one string
-    merged_message = ' '.join(terminate_messages)
-    
-    return merged_message
-
 class Manager(object):
     def __init__(self) -> None:
 
         pass
 
-    def run_flow(self, prompt: str, vector_name: str, chat_history = []) -> None:
+    def run_flow(self, prompt: str, vector_name: str, chat_history = [], stream=False) -> None:
 
         backup_yaml = os.path.join(os.path.dirname(__file__), 'prompt_template.yaml')
         print("backup prompt yaml: {backup_yaml}")
@@ -60,11 +44,16 @@ class Manager(object):
              code_writer_system_message = load_prompt_from_yaml("system", prefix="autogen", file_path=backup_yaml)
 
         model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
+        if not stream:
+            config_list = {"config_list": [{"model": model or "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]}
+        else:
+            config_list = {"config_list": [{"model": model or "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}], "stream": True,}
 
         code_writer_agent = ConversableAgent(
             "code_writer_agent",
             system_message=code_writer_system_message,
-            llm_config={"config_list": [{"model": model or "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]},
+            is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
+            llm_config=config_list,
             code_execution_config=False,  # Turn off code execution for this agent.
         )
 
@@ -77,18 +66,28 @@ class Manager(object):
         # Create an agent with code executor configuration.
         code_executor_agent = ConversableAgent(
             "code_executor_agent",
+            is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
             llm_config=False,  # Turn off LLM for this agent.
             code_execution_config={"executor": executor},  # Use the local command line code executor.
             human_input_mode="NEVER",  # never take human input for this agent for safety.
         )
         start_time = time.time()
 
-        # Register the tool signature with the assistant agent.
-        code_writer_agent.register_for_llm(name="calculator", description="A simple calculator")(calculator)
+        # 4. Define Agent-specific Functions
+        def weather_forecast(city: str) -> str:
+            return f"The weather forecast for {city} at {datetime.now()} is sunny."
 
-        # Register the tool function with the user proxy agent.
-        code_executor_agent.register_for_execution(name="calculator")(calculator)
+        autogen.register_function(
+            weather_forecast, caller=code_writer_agent, executor=code_executor_agent, description="Weather forecast for a city"
+        )
+        autogen.register_function(
+            calculator, caller=code_writer_agent, executor=code_executor_agent, description="A simple calculator"
+        )
 
+        print(
+            f" - on_connect(): Initiating chat with agent {code_writer_agent} using message '{prompt}'",
+            flush=True,
+        )
         chat_result = code_executor_agent.initiate_chat(
             code_writer_agent,
             message=prompt,
@@ -98,15 +97,12 @@ class Manager(object):
 
         print(chat_result)
 
-
-        filtered = get_merged_terminate_messages(chat_result)
-        print("FILTERED")
-        print(filtered)
-
-        #chat_result.chat_history.append({'content': filtered, 'role': 'assistant'})
+        print("SUMMARY")
+        print(chat_result.summary)
 
         response = {
             "messages": chat_result.chat_history,
+            "summary": chat_result.summary,
             "usage": "", #parse_token_usage(logged_history),
             "duration": time.time() - start_time,
         }
