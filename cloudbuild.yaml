@@ -32,7 +32,7 @@ steps:
       COPY . /app
 
       # Set environment variables
-      ENV NEXT_PUBLIC_API_SERVER=${_AUTOGEN_URL}/api
+      ENV _CONFIG_FOLDER=/gcs_config 
 
       # Install this package
       RUN pip install . && pip install sunholo[all] && pip list && python --version
