@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.middleware.cors import CORSMiddleware
-import os
 
 from ..manager import Manager
 import traceback
@@ -45,23 +44,26 @@ manager = Manager()
 @api.post("/generate")
 async def generate(req: GenerateWebRequest) -> Dict:
     """Generate a response from the autogen flow"""
-    prompt = req.prompt
-    history = req.history or ""
+    prompt = req.user_input
+    vector_name = req.vector_name
+    chat_history = req.chat_history or ""
 
-    prompt = f"{history}\n\n{prompt}"
-    print("******history******", history)
+    prompt = f"{chat_history}\n\n{prompt}"
+    print("******history******", chat_history)
 
     try:
-        agent_response = manager.run_flow(prompt=prompt)
+        agent_response = manager.run_flow(prompt=prompt, vector_name=vector_name, chat_history=chat_history)
         response = {
             "data": agent_response,
-            "status": True
+            "status": True,
+            "vector_name": vector_name
         }
     except Exception as e:
         traceback.print_exc()
         response = {
             "data": str(e),
-            "status": False
+            "status": False,
+            "vector_name": vector_name
         }
 
     return response

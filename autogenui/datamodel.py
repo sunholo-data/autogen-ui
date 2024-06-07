@@ -7,8 +7,9 @@ from pydantic.dataclasses import dataclass
 class GenerateWebRequest:
     """Project data model"""
 
-    prompt: str
-    history: Optional[str] = None
+    user_input: str
+    vector_name: str
+    chat_history: Optional[list] = None
 
 
 @dataclass

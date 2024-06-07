@@ -140,3 +140,15 @@ curl -X POST ${FLASK_URL}/api/generate \
            "history": "No history\nNo history too"
          }'
 ```
+
+With sunholo
+
+```sh
+pip install sunholo[cli]
+sunholo proxy start autogen
+
+sunholo vac invoke autogen '{
+           "prompt": "what is 100th prime number?",
+           "history": "No history\nNo history too"
+         }'
+

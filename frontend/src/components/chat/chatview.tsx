@@ -305,8 +305,9 @@ export default function ChatBoxView({
     setMessages(messageHolder);
 
     const payload = {
-      prompt: query,
-      history: history,
+      user_input: query,
+      vector_name: "autogen_default",
+      chat_history: [history],
     };
 
     console.log("payload", payload);
