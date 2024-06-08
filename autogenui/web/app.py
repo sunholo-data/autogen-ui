@@ -56,7 +56,8 @@ async def generate(req: GenerateWebRequest) -> Dict:
         response = {
             "data": agent_response,
             "status": True,
-            "vector_name": vector_name
+            "vector_name": vector_name,
+            "answer": agent_response.get("summary")
         }
     except Exception as e:
         traceback.print_exc()

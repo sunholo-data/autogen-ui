@@ -105,7 +105,6 @@ class Manager(object):
             "summary": chat_result.summary,
             "usage": "", #parse_token_usage(logged_history),
             "duration": time.time() - start_time,
-            "answer": chat_result.summary
         }
 
         return response
